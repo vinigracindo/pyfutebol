@@ -2,7 +2,7 @@ import requests
 from lxml import html
 import json
 from dicttoxml import dicttoxml
-from utils import is_hh_mm_time
+from pyfutebol.utils import is_hh_mm_time
 
 
 site = 'https://www.placardefutebol.com.br/'
