@@ -1,0 +1,2 @@
+lxml
+dicttoxml==1.7.4
