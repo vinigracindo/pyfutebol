@@ -13,6 +13,9 @@ O format aceita como parâmetro 'json', 'xml' e o padrão 'dict'.
 O format indica o tipo de saída.
 O format aceita como parâmetro 'json', 'xml' e o padrão 'dict'.
 
+* `buscar_jogo_por_time(time)` - Retorna o jogo do time especificado.
+retorna vazio se não houver jogos hoje para o time.
+
 
 ## Como instalar?
 
@@ -42,4 +45,10 @@ for resultado in resultados:
 from pyfutebol import crawler
 resultados = crawler.jogos_ao_vivo(format='json')
 print(resultado) # saída em formato json
+```
+
+```python
+from pyfutebol import crawler
+resultado = crawler.buscar_jogo_por_time('flamengo')
+print(resultado)
 ```
