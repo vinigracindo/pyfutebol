@@ -1,94 +1,110 @@
-import requests
-from lxml import html
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
 import json
 from dicttoxml import dicttoxml
-from pyfutebol.utils import is_hh_mm_time
 
 
-site = 'https://www.placardefutebol.com.br/'
+url = 'https://www.placardefutebol.com.br/'
 
 
 def jogos_de_hoje(format='dict'):
-    url = site
-    page = requests.get(url)
-    tree = html.fromstring(page.content)
+    html = urlopen(url)
+    page = BeautifulSoup(html, 'lxml')
+    titles = page.find_all('h3', class_='match-list_league-name')
+    championships = page.find_all('div', class_='container content')
     
-    campeonatos = tree.xpath('//*[@id="livescore"]/a/div/div/h3/text()')
+    results = []
     
-    divisao_por_campeonato = tree.xpath('//*[@id="livescore"]/div')
-    
-    resultado = []
-    
-    for idx, div in enumerate(divisao_por_campeonato):
-        campeonato = {}
-        jogos = div.xpath('.//div[contains(@class, "row")]')
-        jogos_hoje = []
+    for id, championship in enumerate(championships):
+        matchs_by_championship = []
+        matchs = championship.find_all('div', class_='row align-items-center content')
         
-        for jogo in jogos:
-            status = jogo.xpath('.//span[contains(@class,"status-name")]/text()')[0]
-            times = jogo.xpath('.//div[contains(@class,"team-name")]/h5/text()')
+        for match in matchs:
+            status = match.find('span', class_='status-name').text
+            teams = match.find_all('div', class_='team-name')
+            status = match.find('span', class_='status-name').text
+            scoreboard = match.find_all('span', class_='badge badge-default')
             
-            info = {}
-            if (status == 'AO VIVO' or ("MIN" in status) or status == 'INTERVALO' or status == 'ENCERRADO'):
-                placar = jogo.xpath('.//div[contains(@class,"match-score")]/h4/span/text()')
-                info['placar'] = {times[0]: placar[0], times[1]: placar[1]},
-                info['placar_resumido'] = '{} x {}'.format(*placar)
-            elif (is_hh_mm_time(status)):
-                info['status'] = 'EM BREVE'
-                info['hora_do_jogo'] = jogo.xpath('.//span[contains(@class,"status-name")]/text()')[0]
+            team_home = teams[0].text.strip()
+            team_visitor = teams[1].text.strip()
             
-            informacoes = {
-                'jogo': '{} x {}'.format(times[0], times[1]),
+            info = {
+                'match': '{} x {}'.format(team_home, team_visitor),
                 'status': status,
             }
             
-            informacoes.update(info)
+            score = {}
             
-            jogos_hoje.append(informacoes)
-        
-        campeonato[campeonatos[idx]] = jogos_hoje
-        resultado.append(campeonato)
+            # Se o jogo já começou então existe placar.
+            try:
+                score['scoreboard'] = {
+                    team_home: scoreboard[0].text,
+                    team_visitor: scoreboard[1].text
+                }
+                score['summary'] = '{} x {}'.format(scoreboard[0].text, scoreboard[1].text)
+            # Caso não tenha começado, armazena o horário de início
+            except:
+                score['start_in'] = status
+                score['status'] = 'EM BREVE'
+            
+            info.update(score)
+            
+            matchs_by_championship.append(info)
+            
+        title = titles[id].text
+        results.append({title: matchs_by_championship})
         
     if (format == 'json'):
-        return json.dumps(resultado)
+        return json.dumps(results)
     elif (format == 'xml'):
-        return dicttoxml(resultado)
+        return dicttoxml(results)
     else:
-        return resultado
-    
-    
+        return results
+
+  
 def jogos_ao_vivo(format='dict'):
-    url = site + 'jogos-em-andamento'
-    page = requests.get(url)
-    tree = html.fromstring(page.content)
+    html = urlopen(url + 'jogos-em-andamento')
+    page = BeautifulSoup(html, 'lxml')
+    titles = page.find_all('h3', class_='match-list_league-name')
+    championships = page.find_all('div', class_='container content')
     
-    campeonatos = tree.xpath('//*[@id="livescore"]/a/div/div/h3/text()')
+    results = []
     
-    divisao_por_campeonato = tree.xpath('//*[@id="livescore"]/div')
-    
-    resultado = []
-    
-    for idx, div in enumerate(divisao_por_campeonato):
-        campeonato = {}
-        jogos = div.xpath('.//div[contains(@class, "row")]')
-        jogos_hoje = []
-        for jogo in jogos:
-            times = jogo.xpath('.//div[contains(@class,"team-name")]/h5/text()')
-            placar = jogo.xpath('.//div[contains(@class,"match-score")]/h4/span/text()')
-            jogo = {
-                'jogo': '{} x {}'.format(times[0], times[1]),
-                'tempo': jogo.xpath('.//span[contains(@class,"status-name")]/text()')[0],
-                'placar': {times[0]: placar[0], times[1]: placar[1]},
-                'placar_resumido': '{} x {}'.format(*placar)
-            }
-            jogos_hoje.append(jogo)
+    for id, championship in enumerate(championships):
+        matchs_by_championship = []
+        matchs = championship.find_all('div', class_='row align-items-center content')
         
-        campeonato[campeonatos[idx]] = jogos_hoje
-        resultado.append(campeonato)
+        for match in matchs:
+            status = match.find('span', class_='status-name').text
+            teams = match.find_all('div', class_='team-name')
+            status = match.find('span', class_='status-name').text
+            scoreboard = match.find_all('span', class_='badge badge-default')
+            
+            team_home = teams[0].text.strip()
+            team_visitor = teams[1].text.strip()
+            
+            info = {
+                'match': '{} x {}'.format(team_home, team_visitor),
+                'status': status,
+                'score': {
+                    team_home: scoreboard[0].text,
+                    team_visitor: scoreboard[1].text
+                },
+                'summary': '{} x {}'.format(scoreboard[0].text, scoreboard[1].text)
+            }
+            
+            score = {}
+            
+            info.update(score)
+            
+            matchs_by_championship.append(info)
+            
+        title = titles[id].text
+        results.append({title: matchs_by_championship})
         
     if (format == 'json'):
-        return json.dumps(resultado)
+        return json.dumps(results)
     elif (format == 'xml'):
-        return dicttoxml(resultado)
+        return dicttoxml(results)
     else:
-        return resultado
+        return results

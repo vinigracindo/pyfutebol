@@ -1,1 +1,0 @@
-from pyfutebol import utils
