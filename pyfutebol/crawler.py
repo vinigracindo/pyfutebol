@@ -4,13 +4,24 @@ import json
 import re
 from dicttoxml import dicttoxml
 
+_page = None
 
-url = 'https://www.placardefutebol.com.br/'
+def get_html_page(cache):
+    global _page
+    
+    if cache is False:
+        _page = None
+    if _page is None:
+        html = urlopen('https://www.placardefutebol.com.br/')
+        _page = BeautifulSoup(html, 'lxml')
+        
+    res = _page
+    
+    return res
+    
 
-
-def jogos_de_hoje(format='dict'):
-    html = urlopen(url)
-    page = BeautifulSoup(html, 'lxml')
+def jogos_de_hoje(format='dict', cache=True):
+    page = get_html_page(cache)
     titles = page.find_all('h3', class_='match-list_league-name')
     championships = page.find_all('div', class_='container content')
     
@@ -60,8 +71,8 @@ def jogos_de_hoje(format='dict'):
         return results
 
   
-def jogos_ao_vivo(format='dict'):
-    matchs = jogos_de_hoje()
+def jogos_ao_vivo(format='dict', cache=True):
+    matchs = jogos_de_hoje(cache=cache)
     results = list(filter(lambda match: re.findall(r'INTERVALO|AO VIVO|MIN', match['status']), matchs))
     
     if (format == 'json'):
@@ -71,6 +82,6 @@ def jogos_ao_vivo(format='dict'):
     else:
         return results
         
-def buscar_jogo_por_time(time):
-    matchs = jogos_de_hoje()
+def buscar_jogo_por_time(time, cache=True):
+    matchs = jogos_de_hoje(cache=cache)
     return list(filter(lambda match: time.lower() in match['match'].lower(), matchs))

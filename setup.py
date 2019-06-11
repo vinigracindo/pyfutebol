@@ -2,7 +2,7 @@ from setuptools import setup
 
 
 setup(name='pyfutebol',
-      version='2.2.0',
+      version='2.2.1',
       description='Crawler para resultados de futebol',
       url='https://github.com/vinigracindo/pyfutebol/',
       author='Vinnicyus Gracindo',
