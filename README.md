@@ -25,6 +25,13 @@ o crawler faz uma consulta novamente ao site atualizando os dados.
 
 ## Como instalar?
 
+Instale as dependências
+
+```console
+pip install dicttoxml
+pip install lxml
+```
+
 Para instalar usando pip:
 
 ```console
